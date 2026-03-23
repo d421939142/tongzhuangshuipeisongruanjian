@@ -24,7 +24,7 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -i ~/.ssh/deploy_key root@43.138.207.105 << 'ENDSSH'
+          ssh -i ~/.ssh/deploy_key root@43.138.207.105 'set -e; bash -s' << 'ENDSSH'
             set -e
 
             echo "开始部署..."
@@ -53,7 +53,7 @@ jobs:
 
             if ! command -v docker-compose &> /dev/null; then
               echo "Docker Compose未安装，正在安装..."
-              curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+              curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
             fi
 
@@ -67,7 +67,7 @@ jobs:
             echo "配置环境变量..."
             mkdir -p prod
             if [ ! -f "prod/.env" ]; then
-              cat > prod/.env << 'ENVEOF'
+              cat > prod/.env << 'EOF'
 NODE_ENV=production
 BACKEND_PORT=3001
 API_KEY=water-delivery-$(openssl rand -hex 16)
@@ -81,7 +81,7 @@ VITE_DELIVERY_APP_TITLE=配送助手
 NGINX_PORT=80
 DOMAIN=43.138.207.105
 DELIVERY_DOMAIN=43.138.207.105
-ENVEOF
+EOF
             fi
 
             # 构建前端
@@ -116,7 +116,7 @@ ENVEOF
       - name: Notification
         if: always()
         run: |
-          if [ ${{ job.status }} == 'success' ]; then
+          if [ "${{ job.status }}" == "success" ]; then
             echo "✅ 部署成功！"
             echo "访问地址: http://43.138.207.105"
           else
