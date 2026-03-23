@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 后端API服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: water-delivery-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=${BACKEND_PORT:-3001}
+      - HOST=0.0.0.0
+      - API_KEY=${API_KEY}
+      - DB_PATH=/app/data/database.db
+      - LOG_LEVEL=info
+      - LOG_PATH=/app/logs
+      - FRONTEND_URL=https://${DOMAIN}
+      - DELIVERY_APP_URL=https://${DELIVERY_DOMAIN}
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+    networks:
+      - water-delivery-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: water-delivery-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./delivery-app/dist:/usr/share/nginx/delivery
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - backend
+    networks:
+      - water-delivery-network
+
+networks:
+  water-delivery-network:
+    driver: bridge

@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # 后端API服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: water-delivery-backend-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
+      - API_KEY=${API_KEY}
+      - DB_PATH=/app/data/database.db
+      - LOG_LEVEL=info
+      - LOG_PATH=/app/logs
+      - FRONTEND_URL=http://localhost:5173
+      - DELIVERY_APP_URL=http://localhost:5174
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+    ports:
+      - "3001:3001"
+    networks:
+      - water-delivery-network
+    command: sh -c "npm install && node server.js"
+
+  # 管理端前端（开发模式）
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: water-delivery-frontend-dev
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+      - VITE_APP_TITLE=桶装水配送管理系统
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - water-delivery-network
+    depends_on:
+      - backend
+
+  # 配送APP（开发模式）
+  delivery-app:
+    build:
+      context: ./delivery-app
+      dockerfile: Dockerfile.dev
+    container_name: water-delivery-delivery-app-dev
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+      - VITE_APP_TITLE=配送助手
+    volumes:
+      - ./delivery-app:/app
+      - /app/node_modules
+    ports:
+      - "5174:5173"
+    networks:
+      - water-delivery-network
+    depends_on:
+      - backend
+
+networks:
+  water-delivery-network:
+    driver: bridge

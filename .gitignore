@@ -1,0 +1,36 @@
+# 环境变量文件
+.env
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志文件
+logs/
+*.log
+
+# 依赖
+node_modules/
+
+# 构建输出
+frontend/dist/
+frontend/.vite/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+*.tmp
+*.temp
+
+# 备份文件
+*.backup
+*.bak
